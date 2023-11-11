@@ -1,11 +1,25 @@
 <script lang="ts">
     import { jsPDF } from "jspdf";
+    import type { TableConfig } from "jspdf";
 
     let pdfDataUrl: string;
 
+    let tableData = [{ "1. Part Number": " ", "2. Part Name": "Hello"}];
+
+    let tableConfig: TableConfig = {
+        fontSize: 10,
+        padding: 1,
+        headerBackgroundColor: "#FFFFFF",
+    }
+
     function createFAIPdf() {
-        const doc = new jsPDF();
-        doc.text("Hello world!", 10, 10);
+        const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "in",
+            format: [8.5, 11],
+        });
+        doc.text("AS9102 First Article Inspection Form", 4.25, 0.5, { align: "center" });
+        doc.table(1, 1, tableData, ["1. Part Number", "2. Part Name"], tableConfig);
         pdfDataUrl = doc.output('datauristring');
     }
 
