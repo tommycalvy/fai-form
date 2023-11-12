@@ -24,6 +24,7 @@
 	"type": "module",
 	"dependencies": {
 		"jspdf": "^2.5.1",
+		"jspdf-autotable": "^3.7.1",
 		"pdfjs-dist": "^4.0.189"
 	}
 }

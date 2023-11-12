@@ -1,16 +1,9 @@
 <script lang="ts">
     import { jsPDF } from "jspdf";
-    import type { TableConfig } from "jspdf";
+    import type { CellConfig, TableConfig } from "jspdf";
+    import autoTable from 'jspdf-autotable';
 
     let pdfDataUrl: string;
-
-    let tableData = [{ "1. Part Number": " ", "2. Part Name": "Hello"}];
-
-    let tableConfig: TableConfig = {
-        fontSize: 10,
-        padding: 1,
-        headerBackgroundColor: "#FFFFFF",
-    }
 
     function createFAIPdf() {
         const doc = new jsPDF({
@@ -19,7 +12,50 @@
             format: [8.5, 11],
         });
         doc.text("AS9102 First Article Inspection Form", 4.25, 0.5, { align: "center" });
-        doc.table(1, 1, tableData, ["1. Part Number", "2. Part Name"], tableConfig);
+        //doc.table(1, 1, tableData, cellConfig, tableConfig);
+        autoTable(doc, {
+            body: [
+                ['1. Part Number', '2. Part Name', '3. Serial Number', '4. FAI Report Number'],
+                ['5. Part Revision Level', '6. Drawing Number', '7. Drawing revision level', '8. Additional Changes'],
+            ],
+            theme: 'grid',
+            startY: 1,
+            tableWidth: 7,
+            styles: {
+                fontStyle: 'bold',
+                textColor: [0, 0, 0],
+                fontSize: 8.5,
+                lineColor: [0, 0, 0],
+                lineWidth: 0.01,
+                minCellHeight: 0.8,
+                cellPadding: {
+                    top: 0.01,
+                    right: 0.05,
+                    bottom: 0.05,
+                    left: 0.1,
+                },
+            }
+        });
+        autoTable(doc, {
+            body: [
+                ['1723232', 'Ball', 'asdfsdfsd', '213123123'],
+                ['2', '55', '2', 'None'],
+            ],
+            theme: 'plain',
+            startY: 1,
+            tableWidth: 7,
+            styles: {
+                textColor: [0, 0, 0],
+                fontSize: 15,
+                minCellHeight: 0.8,
+                cellPadding: {
+                    top: 0.01,
+                    right: 0.05,
+                    bottom: 0.05,
+                    left: 0.1,
+                },
+            }
+        });
         pdfDataUrl = doc.output('datauristring');
     }
 
