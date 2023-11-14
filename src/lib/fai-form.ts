@@ -2,7 +2,114 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { CellHookData, Styles, UserOptions } from 'jspdf-autotable';
 
-export function createFAIForm1Pdf() {
+interface FAIForm1Data {
+    partNumber: string;
+    partName: string;
+    serialNumber: string;
+    faiReportNumber: string;
+    partRevisionLevel: string;
+    drawingNumber: string;
+    drawingRevisionLevel: string;
+    additionalChanges: string;
+    manufacturingProcessReference: string;
+    organizationName: string;
+    supplierCode: string;
+    poNumber: string;
+    baselinePartNumber: string;
+    detailFAI: boolean;
+    fullFAI: boolean;
+    assemblyFAI: boolean;
+    partialFAI: boolean;
+    reasonForPartialFAI: string;
+    faiComplete: boolean;
+    signature: string;
+    date: string;
+    reviewedBy: string;
+    reviewedByDate: string;
+    customerApproval: string;
+    customerApprovalDate: string;
+}
+
+function randomNumber(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function randomBoolean() {
+    return Math.random() >= 0.5;
+}
+
+function randomCapitalLetter() {
+    return String.fromCharCode(randomNumber(65, 90));
+}
+
+function randomLowercaseLetter() {
+    return String.fromCharCode(randomNumber(97, 122));
+}
+
+function randomLowercaseLetterString(length: number) {
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += randomLowercaseLetter();
+    }
+    return result;
+}
+
+function randomCapitalLetterString(length: number) {
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += randomCapitalLetter();
+    }
+    return result;
+}
+
+function randomDate() {
+    let year = randomNumber(2000, 2021);
+    let month = randomNumber(1, 12);
+    let day = randomNumber(1, 28);
+    return `${year}-${month}-${day}`;
+}
+
+
+export function generateRandomFAIForm1Data(): FAIForm1Data {
+    let detailFAI = randomBoolean();
+    let fullFAI = randomBoolean();
+    return {
+        partNumber: randomNumber(100000, 999999).toString(),
+        partName: randomCapitalLetterString(10),
+        serialNumber: randomNumber(100000, 999999).toString(),
+        faiReportNumber: randomNumber(100000, 999999).toString(),
+        partRevisionLevel: randomCapitalLetter(),
+        drawingNumber: randomNumber(100000, 999999).toString(),
+        drawingRevisionLevel: randomCapitalLetter(),
+        additionalChanges: randomLowercaseLetterString(17),
+        manufacturingProcessReference: randomCapitalLetterString(7),
+        organizationName: randomCapitalLetterString(8),
+        supplierCode: randomCapitalLetterString(7),
+        poNumber: randomNumber(100000, 999999).toString(),
+        baselinePartNumber: randomNumber(100000, 999999).toString(),
+        detailFAI: detailFAI,
+        assemblyFAI: !detailFAI,
+        fullFAI: fullFAI,
+        partialFAI: !fullFAI,
+        reasonForPartialFAI: randomLowercaseLetterString(50),
+        faiComplete: randomBoolean(),
+        signature: 'Signature',
+        date: randomDate(),
+        reviewedBy: 'Reviewed By',
+        reviewedByDate: randomDate(),
+        customerApproval: 'Customer Approval',
+        customerApprovalDate: randomDate(),
+    };
+}
+
+function drawCheckMark(doc: jsPDF, x: number, y: number, size: number) {
+    doc.setLineWidth(0.01);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(x, y, x + size, y + size);
+    doc.line(x + size, y, x, y + size);
+}
+
+export function createFAIForm1Pdf(d: FAIForm1Data) {
 
     const doc = new jsPDF({
         orientation: "portrait",
@@ -45,9 +152,9 @@ export function createFAIForm1Pdf() {
     });
     autoTable(doc, {
         body: [
-            ['1723232', 'Ball', 'asdfsdfsd', '213123123'],
-            ['2', '55', '2', 'None'],
-            ['7', 'Demarcait', '98238', '828283939'],
+            [d.partNumber, d.partName, d.serialNumber, d.faiReportNumber],
+            [d.partRevisionLevel, d.drawingNumber, d.drawingRevisionLevel, d.additionalChanges],
+            [d.manufacturingProcessReference, d.organizationName, d.supplierCode, d.poNumber],
         ],
         theme: 'plain',
         startY: 1,
@@ -128,6 +235,37 @@ export function createFAIForm1Pdf() {
                 doc.setLineDashPattern([], 0);
             }
             
+        },
+    });
+    doc.addFont('/static/Zapf_Dingbats_Regular.ttf', 'ZapfDingbats', 'normal');
+    autoTable(doc, {
+        body: [
+            ['', '', ''],
+            [{ content: '4', styles: { font: 'ZapfDingbats'}}, '', { content: d.baselinePartNumber, colSpan: 1, rowSpan: 3, styles: { halign: 'left' } }],
+            ['', '', ''],
+            ['', { content: d.reasonForPartialFAI, colSpan: 2, rowSpan: 3, styles: { halign: 'left' } }],
+            ['', '', ''],
+            ['', '', ''],
+        ],
+        theme: 'plain',
+        startY: 2.8,
+        tableWidth: 7.39,
+        styles: {
+            fontStyle: 'normal',
+            textColor: [0, 0, 0],
+            fontSize: 15,
+            minCellHeight: 0.2,
+            cellPadding: {
+                top: 0.01,
+                right: 0.05,
+                bottom: 0.02,
+                left: 0.15,
+            },
+        },
+        columnStyles: {
+            0: { cellWidth: 1.5 },
+            1: { cellWidth: 1.8 },
+            2: { cellWidth: 4.09 },
         },
     });
     autoTable(doc, {
