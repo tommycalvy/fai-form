@@ -5,18 +5,29 @@
 
     function createFAIPdf() {
         let randomData = generateRandomFAIForm1Data();
-        pdfDataUrl = createFAIForm1Pdf(randomData);
+        pdfDataUrl = createFAIForm1Pdf(false, randomData);
+    }
+
+    function createBlankFAIPdf() {
+        pdfDataUrl = createFAIForm1Pdf(true);
     }
 
 </script>
 
 <div class="flex flex-col justify-center text-3xl font-semibold py-10 items-center">
     <h1>First Article Inspection Generator</h1>
-    <button on:click={createFAIPdf}
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md mt-10"
-    >
-        Display PDF
-    </button>
+    <div class="flex justify-center gap-20" >
+        <button on:click={createBlankFAIPdf}
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md mt-10"
+        >
+            Blank Form
+        </button>
+        <button on:click={createFAIPdf}
+            class=" bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md mt-10"
+        >
+            Form with Data
+        </button>
+    </div>
 </div>
 
 
