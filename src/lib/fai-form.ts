@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { CellHookData, Styles, UserOptions } from 'jspdf-autotable';
+import type { CellHookData, Styles } from 'jspdf-autotable';
 
 interface FAIForm1Data {
     partNumber: string;
@@ -237,7 +237,6 @@ export function createFAIForm1Pdf(d: FAIForm1Data) {
             
         },
     });
-    doc.addFont('/static/Zapf_Dingbats_Regular.ttf', 'ZapfDingbats', 'normal');
     autoTable(doc, {
         body: [
             [{ content: '4', styles: { font: 'ZapfDingbats', fontSize: 13, halign: 'left', cellPadding: { top: 0.16, left: 1.11} }}, '', ''],
