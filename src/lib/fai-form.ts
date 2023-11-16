@@ -77,6 +77,20 @@ function randomDate() {
     return `${year}-${month}-${day}`;
 }
 
+
+function randomName() {
+    let result = '';
+    result += randomCapitalLetter();
+    for (let i = 0; i < randomNumber(4, 7); i++) {
+        result += randomLowercaseLetter();
+    }
+    return result;
+}
+
+function randomFullName() {
+    return `${randomName()} ${randomName()}`;
+}
+
 export function generateRandomFAIForm1Data(): FAIForm1Data {
     let detailFAI = randomBoolean();
     let fullFAI = randomBoolean();
@@ -110,23 +124,22 @@ export function generateRandomFAIForm1Data(): FAIForm1Data {
         reasonForPartialFAI: randomLowercaseLetterString(50),
         subAssemblyNumbers,
         faiComplete: randomBoolean(),
-        signature: 'Signature',
+        signature: randomFullName(),
         signatureDate: randomDate(),
-        reviewedBy: 'Reviewed By',
+        reviewedBy: randomFullName(),
         reviewedByDate: randomDate(),
-        customerApproval: 'Customer Approval',
+        customerApproval: randomFullName(),
         customerApprovalDate: randomDate(),
     };
 }
 
-export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
-
-    const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "in",
-        format: [8.5, 11],
-    });
+function faiForm1PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
     doc.text("AS9102 First Article Inspection Form", 4.25, 0.5, { align: "center" });
+    doc.setFont('helvetica', 'bolditalic');
+    doc.setFontSize(12);
+    doc.text("Form 1: Part Number Accountability", 0.7, 0.8, { align: "left" });
     
     let columnStyles: {
         [key: string]: Partial<Styles>;
@@ -511,13 +524,11 @@ export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
     });
     if (!blank && d) {
         doc.addFont('SignatureCollection-VGyDV.ttf', 'Signature', 'normal');
-        doc.setFont('Signature');
-
         autoTable(doc, {
             body: [
-                [d.signature, d.signatureDate],
-                [d.reviewedBy, d.reviewedByDate],
-                [d.customerApproval, d.customerApprovalDate],
+                ['', d.signatureDate],
+                ['', d.reviewedByDate],
+                ['', d.customerApprovalDate],
             ],
             theme: 'plain',
             startY: 8.3,
@@ -538,9 +549,94 @@ export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
                 0: { cellWidth: 5.3 },
                 1: { cellWidth: 2.09 },
             },
+            didDrawCell: (data: CellHookData) => {
+                if (data.section === 'body' && data.column.index === 0 ) {
+                    if (data.row.index === 0) {
+                        doc.setFont('Signature');
+                        doc.setFontSize(20);
+                        doc.text(d.signature, data.cell.x + 0.4, data.cell.y + 0.4);
+                    } else if (data.row.index === 1) {
+                        doc.setFont('Signature');
+                        doc.setFontSize(20);
+                        doc.text(d.reviewedBy, data.cell.x + 0.4, data.cell.y + 0.4);
+                    } else if (data.row.index === 2) {
+                        doc.setFont('Signature');
+                        doc.setFontSize(20);
+                        doc.text(d.customerApproval, data.cell.x + 0.4, data.cell.y + 0.4);
+                    }
+                }
+            }
         });
-        console.log(doc.getFontList()); 
     }
+}
+
+export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
+
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "in",
+        format: [8.5, 11],
+    });
+    faiForm1PDF(doc, blank, d);
+
+    return doc.output('datauristring');
+}
+
+function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text("AS9102 First Article Inspection Form", 4.25, 0.5, { align: "center" });
+    doc.setFont('helvetica', 'bolditalic');
+    doc.setFontSize(11);
+    doc.text("Form 2: Product Accountability - Raw Material, Specifications and", 0.7, 0.72, { align: "left" });
+    doc.text("Special Process(es), Functional Testing", 0.7, 0.88, { align: "left" });
+
+    autoTable(doc, {
+        body: [
+            [{ content: '1. Part Number', styles: { fontSize: 9}}, { content: '2. Part Name', colSpan: 2, styles: { fontSize: 9}}, { content: '3. Serial Number', colSpan: 2, styles: { fontSize: 9}}, { content: '4. FAI Report Number', styles: { fontSize: 9}}],
+            ['5. Material or Process Name', '6. Specification Number', '7. Code', '8. Special Process Supplier Code', '9. Customer Approval Verification', '10. Certificatate of Conformance Number'],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+        ],
+        theme: 'grid',
+        startY: 1,
+        tableWidth: 7.39,
+        styles: {
+            fontStyle: 'bold',
+            textColor: [0, 0, 0],
+            fontSize: 8.5,
+            lineColor: [0, 0, 0],
+            lineWidth: 0.01,
+            minCellHeight: 0.6,
+            cellPadding: {
+                top: 0.02,
+                right: 0.05,
+                bottom: 0.02,
+                left: 0.1,
+            },
+        },
+        columnStyles: {
+            0: { cellWidth: 1.5 },
+            1: { cellWidth: 1 },
+            2: { cellWidth: 1.19 },
+            3: { cellWidth: 1.2 },
+            4: { cellWidth: 1 },
+            5: { cellWidth: 1.5 },
+        },
+    });
+}
+
+export function createFAIReport(blank: boolean, d?: FAIForm1Data) {
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "in",
+        format: [8.5, 11],
+    });
+    faiForm1PDF(doc, blank, d);
+    doc.addPage([8.5, 11], 'portrait');
+    faiForm2PDF(doc, blank, d);
 
     return doc.output('datauristring');
 }
