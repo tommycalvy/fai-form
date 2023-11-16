@@ -268,7 +268,7 @@ function faiForm1PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
         autoTable(doc, {
             body: [
                 ['', '', ''],
-                ['', '', { content: d.baselinePartNumber, colSpan: 1, rowSpan: 3, styles: { halign: 'left' } }],
+                ['', '', { content: d.baselinePartNumber, rowSpan: 3, styles: { halign: 'left' } }],
                 ['', '', ''],
                 ['', { content: d.reasonForPartialFAI, colSpan: 2, rowSpan: 3, styles: { halign: 'left' } }],
                 ['', '', ''],
@@ -593,12 +593,97 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
 
     autoTable(doc, {
         body: [
-            [{ content: '1. Part Number', styles: { fontSize: 9}}, { content: '2. Part Name', colSpan: 2, styles: { fontSize: 9}}, { content: '3. Serial Number', colSpan: 2, styles: { fontSize: 9}}, { content: '4. FAI Report Number', styles: { fontSize: 9}}],
-            ['5. Material or Process Name', '6. Specification Number', '7. Code', '8. Special Process Supplier Code', '9. Customer Approval Verification', '10. Certificatate of Conformance Number'],
+            [
+                { content: '1. Part Number', styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+                { content: '2. Part Name', colSpan: 2, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+                { content: '3. Serial Number', colSpan: 2, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+                { content: '4. FAI Report Number', styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}
+            ],
+            [
+                { content: '5. Material or Process Name', styles: { cellPadding: { top: 0.02, bottom: 0.17, left: 0.1 }}}, 
+                { content: '6. Specification Number', styles: { cellPadding: { top: 0.02, bottom: 0.17, left: 0.1 }}}, 
+                { content: '7. Code', styles: { cellPadding: { top: 0.02, bottom: 0.17, left: 0.1 }}}, 
+                { content: '8. Special Process Supplier Code', styles: { cellPadding: { top: 0.02, bottom: 0.17, left: 0.1 }}}, 
+                { content: '9. Customer Approval Verification', styles: { cellPadding: { top: 0.02, bottom: 0.17, left: 0.1 }}}, 
+                { content: '10. Certificatate of Conformance Number', styles: { cellPadding: { top: 0.02, bottom: 0.17, left: 0.1 }}},
+            ],
             ['', '', '', '', '', ''],
             ['', '', '', '', '', ''],
             ['', '', '', '', '', ''],
             ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            ['', '', '', '', '', ''],
+            [
+                {  
+                    content: '11. Functional Test Procedure Number', 
+                    styles: { 
+                        fontStyle: 'bolditalic', 
+                        cellPadding: { top: 0.02, bottom: 0.09, left: 0.1 }
+                    }
+                },
+                {  
+                    content: '12. Acceptance report number, if applicable', 
+                    colSpan: 5, 
+                    styles: { 
+                        fontStyle: 'bolditalic', 
+                        cellPadding: { top: 0.02, bottom: 0.09, left: 0.1 }
+                    }
+                },
+            ],
+            ['', { content: '', colSpan: 5 }],
+            ['', { content: '', colSpan: 5 }],
+            ['', { content: '', colSpan: 5 }],
+            ['', { content: '', colSpan: 5 }],
+            ['', { content: '', colSpan: 5 }],
+            ['', { content: '', colSpan: 5 }],
+            ['', { content: '', colSpan: 5 }],
+            [{ 
+                content: '13. Comments', 
+                colSpan: 6, 
+                styles: { 
+                    fontSize: 10, 
+                    fontStyle: 'bolditalic', 
+                    cellPadding: { top: 0.02, bottom: 0.2, left: 0.1 }
+                }
+            }],
+            [
+                {
+                    content: '14. Prepared By',
+                    colSpan: 3,
+                    styles: {
+                        fontSize: 10,
+                        fontStyle: 'bold',
+                        cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }
+                    }
+                },
+                {
+                    content: '15. Date',
+                    colSpan: 3,
+                    styles: {
+                        fontSize: 10,
+                        fontStyle: 'bold',
+                        cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }
+                    }
+                },
+            ],
         ],
         theme: 'grid',
         startY: 1,
@@ -606,10 +691,10 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
         styles: {
             fontStyle: 'bold',
             textColor: [0, 0, 0],
-            fontSize: 8.5,
+            fontSize: 8.4,
             lineColor: [0, 0, 0],
             lineWidth: 0.01,
-            minCellHeight: 0.6,
+            minCellHeight: 0.21,
             cellPadding: {
                 top: 0.02,
                 right: 0.05,
@@ -618,11 +703,11 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
             },
         },
         columnStyles: {
-            0: { cellWidth: 1.5 },
-            1: { cellWidth: 1 },
-            2: { cellWidth: 1.19 },
-            3: { cellWidth: 1.2 },
-            4: { cellWidth: 1 },
+            0: { cellWidth: 1.4 },
+            1: { cellWidth: 1.1 },
+            2: { cellWidth: 1.24 },
+            3: { cellWidth: 1.25 },
+            4: { cellWidth: 0.9 },
             5: { cellWidth: 1.5 },
         },
     });
