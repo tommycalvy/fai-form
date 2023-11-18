@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { createFAIForm1Pdf, createFAIReport, generateRandomFAIForm1Data } from '$lib/fai-form';
+    import { createFAIForm1Pdf, createFAIReport, generateRandomFAIFormData } from '$lib/fai-form';
 
     let pdfDataUrl: string;
 
     function createFAIPdf() {
-        let randomData = generateRandomFAIForm1Data();
+        let randomData = generateRandomFAIFormData();
         pdfDataUrl = createFAIReport(false, randomData);
     }
 

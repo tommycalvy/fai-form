@@ -1,12 +1,19 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { CellHookData, CellInput, Styles } from 'jspdf-autotable';
+import type { CellHookData, CellInput, RowInput, Styles } from 'jspdf-autotable';
 
-interface subAssemblyNumber {
+interface subAssembly {
     partNumber: number;
     partName: string;
     partSerialNumber: number;
     faiReportNumber: number;
+}
+
+interface Part {
+    partNumber: string;
+    partName: string;
+    serialNumber: string;
+    faiReportNumber: string;
 }
 
 interface FAIForm1Data {
@@ -28,7 +35,7 @@ interface FAIForm1Data {
     assemblyFAI: boolean;
     partialFAI: boolean;
     reasonForPartialFAI: string;
-    subAssemblyNumbers: subAssemblyNumber[];
+    subAssemblies: subAssembly[];
     faiComplete: boolean;
     signature: string;
     signatureDate: string;
@@ -36,6 +43,37 @@ interface FAIForm1Data {
     reviewedByDate: string;
     customerApproval: string;
     customerApprovalDate: string;
+}
+
+interface MaterialOrProcess {
+    materialOrProcessName: string;
+    specificationNumber: string;
+    code: string;
+    specialProcessSupplierCode: string;
+    customerApprovalVerification: string;
+    certificateOfConformanceNumber: string;
+}
+
+interface FunctionalTest {
+    functionalTestProcedureNumber: string;
+    acceptanceReportNumber: string;
+}
+
+interface FAIForm2Data {
+    partNumber: string;
+    partName: string;
+    serialNumber: string;
+    faiReportNumber: string;
+    materialOrProcesses: MaterialOrProcess[];
+    functionalTests: FunctionalTest[];
+    comments: string;
+    preparedBy: string;
+    preparedByDate: string;
+}
+
+interface FAIFormData {
+    form1: FAIForm1Data;
+    form2: FAIForm2Data;
 }
 
 function randomNumber(min: number, max: number) {
@@ -91,12 +129,32 @@ function randomFullName() {
     return `${randomName()} ${randomName()}`;
 }
 
-export function generateRandomFAIForm1Data(): FAIForm1Data {
+function randomApproval() {
+    let p = randomNumber(1, 3);
+    if (p === 1) {
+        return 'Yes';
+    } else if (p === 2) {
+        return 'No';
+    } else {
+        return 'NA';
+    }
+}
+
+export function generateRandomPart(): Part {
+    return {
+        partNumber: randomNumber(100000, 999999).toString(),
+        partName: randomCapitalLetterString(8),
+        serialNumber: randomNumber(100000, 999999).toString(),
+        faiReportNumber: randomNumber(100000, 999999).toString(),
+    };
+}
+
+export function generateRandomFAIForm1Data(p: Part): FAIForm1Data {
     let detailFAI = randomBoolean();
     let fullFAI = randomBoolean();
-    let subAssemblyNumbers: subAssemblyNumber[] = [];
+    let subAssemblies: subAssembly[] = [];
     for (let i = 0; i < randomNumber(7, 15); i++) {
-        subAssemblyNumbers.push({
+        subAssemblies.push({
             partNumber: randomNumber(1000000, 9999999),
             partName: randomCapitalLetterString(randomNumber(10, 20)),
             partSerialNumber: randomNumber(1000000, 9999999),
@@ -104,10 +162,10 @@ export function generateRandomFAIForm1Data(): FAIForm1Data {
         });
     }
     return {
-        partNumber: randomNumber(100000, 999999).toString(),
-        partName: randomCapitalLetterString(8),
-        serialNumber: randomNumber(100000, 999999).toString(),
-        faiReportNumber: randomNumber(100000, 999999).toString(),
+        partNumber: p.partNumber,
+        partName: p.partName,
+        serialNumber: p.serialNumber,
+        faiReportNumber: p.faiReportNumber,
         partRevisionLevel: randomCapitalLetter(),
         drawingNumber: randomNumber(100000, 999999).toString(),
         drawingRevisionLevel: randomCapitalLetter(),
@@ -122,7 +180,7 @@ export function generateRandomFAIForm1Data(): FAIForm1Data {
         fullFAI: fullFAI,
         partialFAI: !fullFAI,
         reasonForPartialFAI: randomLowercaseLetterString(50),
-        subAssemblyNumbers,
+        subAssemblies,
         faiComplete: randomBoolean(),
         signature: randomFullName(),
         signatureDate: randomDate(),
@@ -130,6 +188,48 @@ export function generateRandomFAIForm1Data(): FAIForm1Data {
         reviewedByDate: randomDate(),
         customerApproval: randomFullName(),
         customerApprovalDate: randomDate(),
+    };
+}
+
+export function generateRandomFAIForm2Data(p: Part): FAIForm2Data {
+
+    let materialOrProcesses: MaterialOrProcess[] = [];
+    for (let i = 0; i < randomNumber(12, 24); i++) {
+        materialOrProcesses.push({
+            materialOrProcessName: randomCapitalLetterString(randomNumber(10, 20)),
+            specificationNumber: randomNumber(100000, 999999).toString(),
+            code: randomCapitalLetterString(4),
+            specialProcessSupplierCode: randomCapitalLetterString(2),
+            customerApprovalVerification: randomApproval(),
+            certificateOfConformanceNumber: randomNumber(100000, 999999).toString(),
+        });
+    }
+    let functionalTests: FunctionalTest[] = [];
+    for (let i = 0; i < randomNumber(3, 7); i++) {
+        functionalTests.push({
+            functionalTestProcedureNumber: randomNumber(100000, 999999).toString(),
+            acceptanceReportNumber: randomNumber(100000, 999999).toString(),
+        });
+    }
+
+    return {
+        partNumber: p.partNumber,
+        partName: p.partName,
+        serialNumber: p.serialNumber,
+        faiReportNumber: p.faiReportNumber,
+        materialOrProcesses,
+        functionalTests,
+        comments: randomLowercaseLetterString(50),
+        preparedBy: randomFullName(),
+        preparedByDate: randomDate(),
+    }
+}
+
+export function generateRandomFAIFormData(): FAIFormData {
+    let p = generateRandomPart();
+    return {
+        form1: generateRandomFAIForm1Data(p),
+        form2: generateRandomFAIForm2Data(p),
     };
 }
 
@@ -414,12 +514,12 @@ function faiForm1PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
         let subAssemblyBody: CellInput[][] = [];
         subAssemblyBody.push(['', '', '', '']);
         for (let i = 0; i < 15; i++) {
-            if (i < d.subAssemblyNumbers.length) {
+            if (i < d.subAssemblies.length) {
                 subAssemblyBody.push([
-                    d.subAssemblyNumbers[i].partNumber.toString(),
-                    d.subAssemblyNumbers[i].partName,
-                    d.subAssemblyNumbers[i].partSerialNumber.toString(),
-                    d.subAssemblyNumbers[i].faiReportNumber.toString(),
+                    d.subAssemblies[i].partNumber.toString(),
+                    d.subAssemblies[i].partName,
+                    d.subAssemblies[i].partSerialNumber.toString(),
+                    d.subAssemblies[i].faiReportNumber.toString(),
                 ]);
             } else {
                 subAssemblyBody.push(['', '', '', '']);
@@ -582,7 +682,7 @@ export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
     return doc.output('datauristring');
 }
 
-function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
+function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(15);
     doc.text("AS9102 First Article Inspection Form", 4.25, 0.5, { align: "center" });
@@ -710,18 +810,100 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
             4: { cellWidth: 0.9 },
             5: { cellWidth: 1.5 },
         },
+        didDrawCell: (data: CellHookData) => {
+            if (data.section === 'body' && data.row.index === 1 && data.column.index === 4) {
+                doc.setFontSize(8.5);
+                doc.setFont('helvetica', 'normal');
+                doc.text('(Yes/No/NA)', data.cell.x + 0.09, data.cell.y + 0.53);
+            }
+        }
     });
+
+    if (!blank && d) {
+        let form2body: RowInput[] = [[
+            { content: d.partNumber, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+            { content: d.partName, colSpan: 2, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+            { content: d.serialNumber, colSpan: 2, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+            { content: d.faiReportNumber, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}},
+        ]];
+        form2body.push(['', '', '', '', '', '']);
+        for (let i = 0; i < 24; i++) {
+            if (i < d.materialOrProcesses.length) {
+                form2body.push([
+                    d.materialOrProcesses[i].materialOrProcessName, 
+                    d.materialOrProcesses[i].specificationNumber, 
+                    d.materialOrProcesses[i].code, 
+                    d.materialOrProcesses[i].specialProcessSupplierCode, 
+                    d.materialOrProcesses[i].customerApprovalVerification, 
+                    d.materialOrProcesses[i].certificateOfConformanceNumber,
+                ]);
+            } else {
+                form2body.push(['', '', '', '', '', '']);
+            }
+        }
+        form2body.push(['', '', '', '', '', '']);
+        for (let i = 0; i < 7; i++) {
+            if (i < d.functionalTests.length) {
+                form2body.push([
+                    { content: d.functionalTests[i].functionalTestProcedureNumber  }, 
+                    { content: d.functionalTests[i].acceptanceReportNumber, colSpan: 5 }, 
+                ]);
+            } else {
+                form2body.push(['', { content: '', colSpan: 5 }]);
+            }
+        }
+        form2body.push([{ content: d.comments, colSpan: 6 }]);
+        form2body.push([{ content: d.preparedBy, colSpan: 3 }, { content: d.preparedByDate, colSpan: 3 }]);
+        autoTable(doc, {
+            body: form2body,
+            theme: 'plain',
+            startY: 1,
+            tableWidth: 7.39,
+            styles: {
+                fontStyle: 'normal',
+                textColor: [0, 0, 0],
+                fontSize: 9,
+                minCellHeight: 0.21,
+                cellPadding: {
+                    top: 0.1,
+                    right: 0.05,
+                    bottom: 0.02,
+                    left: 0.1,
+                },
+            },
+            columnStyles: {
+                0: { cellWidth: 1.4 },
+                1: { cellWidth: 1.1 },
+                2: { cellWidth: 1.24 },
+                3: { cellWidth: 1.25 },
+                4: { cellWidth: 0.9 },
+                5: { cellWidth: 1.5 },
+            },
+        });
+    }
 }
 
-export function createFAIReport(blank: boolean, d?: FAIForm1Data) {
+export function createFAIForm2Pdf(blank: boolean, d?: FAIForm2Data) {
+
     const doc = new jsPDF({
         orientation: "portrait",
         unit: "in",
         format: [8.5, 11],
     });
-    faiForm1PDF(doc, blank, d);
-    doc.addPage([8.5, 11], 'portrait');
     faiForm2PDF(doc, blank, d);
+
+    return doc.output('datauristring');
+}
+
+export function createFAIReport(blank: boolean, d?: FAIFormData) {
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "in",
+        format: [8.5, 11],
+    });
+    faiForm1PDF(doc, blank, d?.form1);
+    doc.addPage([8.5, 11], 'portrait');
+    faiForm2PDF(doc, blank, d?.form2);
 
     return doc.output('datauristring');
 }
