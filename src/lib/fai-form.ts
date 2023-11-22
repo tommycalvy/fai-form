@@ -129,6 +129,21 @@ function randomFullName() {
     return `${randomName()} ${randomName()}`;
 }
 
+function randomSentence(max: number) {
+    let result = '';
+    result += randomCapitalLetter();
+    while (true) {
+        result += randomLowercaseLetterString(randomNumber(2, 7));
+        if (result.length >= max) {
+            break;
+        } else {
+            result += ' ';
+        }
+    }
+    result += '.';
+    return result;
+}
+
 function randomApproval() {
     let p = randomNumber(1, 3);
     if (p === 1) {
@@ -136,7 +151,7 @@ function randomApproval() {
     } else if (p === 2) {
         return 'No';
     } else {
-        return 'NA';
+        return 'n/a';
     }
 }
 
@@ -179,7 +194,7 @@ export function generateRandomFAIForm1Data(p: Part): FAIForm1Data {
         assemblyFAI: !detailFAI,
         fullFAI: fullFAI,
         partialFAI: !fullFAI,
-        reasonForPartialFAI: randomLowercaseLetterString(50),
+        reasonForPartialFAI: randomSentence(50),
         subAssemblies,
         faiComplete: randomBoolean(),
         signature: randomFullName(),
@@ -196,7 +211,7 @@ export function generateRandomFAIForm2Data(p: Part): FAIForm2Data {
     let materialOrProcesses: MaterialOrProcess[] = [];
     for (let i = 0; i < randomNumber(12, 24); i++) {
         materialOrProcesses.push({
-            materialOrProcessName: randomCapitalLetterString(randomNumber(10, 20)),
+            materialOrProcessName: randomCapitalLetterString(randomNumber(7, 13)),
             specificationNumber: randomNumber(100000, 999999).toString(),
             code: randomCapitalLetterString(4),
             specialProcessSupplierCode: randomCapitalLetterString(2),
@@ -219,7 +234,7 @@ export function generateRandomFAIForm2Data(p: Part): FAIForm2Data {
         faiReportNumber: p.faiReportNumber,
         materialOrProcesses,
         functionalTests,
-        comments: randomLowercaseLetterString(50),
+        comments: randomSentence(70),
         preparedBy: randomFullName(),
         preparedByDate: randomDate(),
     }
@@ -767,20 +782,20 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
             [
                 {
                     content: '14. Prepared By',
-                    colSpan: 3,
+                    colSpan: 4,
                     styles: {
                         fontSize: 10,
                         fontStyle: 'bold',
-                        cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }
+                        cellPadding: { top: 0.02, bottom: 0.45, left: 0.1 }
                     }
                 },
                 {
                     content: '15. Date',
-                    colSpan: 3,
+                    colSpan: 2,
                     styles: {
                         fontSize: 10,
                         fontStyle: 'bold',
-                        cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }
+                        cellPadding: { top: 0.02, bottom: 0.45, left: 0.1 }
                     }
                 },
             ],
@@ -810,23 +825,16 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
             4: { cellWidth: 0.9 },
             5: { cellWidth: 1.5 },
         },
-        didDrawCell: (data: CellHookData) => {
-            if (data.section === 'body' && data.row.index === 1 && data.column.index === 4) {
-                doc.setFontSize(8.5);
-                doc.setFont('helvetica', 'normal');
-                doc.text('(Yes/No/NA)', data.cell.x + 0.09, data.cell.y + 0.53);
-            }
-        }
     });
 
     if (!blank && d) {
         let form2body: RowInput[] = [[
-            { content: d.partNumber, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
-            { content: d.partName, colSpan: 2, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
-            { content: d.serialNumber, colSpan: 2, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
-            { content: d.faiReportNumber, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}},
+            { content: d.partNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
+            { content: d.partName, colSpan: 2, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
+            { content: d.serialNumber, colSpan: 2, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
+            { content: d.faiReportNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}},
         ]];
-        form2body.push(['', '', '', '', '', '']);
+        form2body.push([{ content: '', colSpan: 6, styles: { cellPadding: { top: 0.5, bottom: 0, left: 0.1 } } }]);
         for (let i = 0; i < 24; i++) {
             if (i < d.materialOrProcesses.length) {
                 form2body.push([
@@ -841,7 +849,7 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
                 form2body.push(['', '', '', '', '', '']);
             }
         }
-        form2body.push(['', '', '', '', '', '']);
+        form2body.push([{ content: '', colSpan: 6, styles: { cellPadding: { top: 0.235, bottom: 0, left: 0.1 } } }]);
         for (let i = 0; i < 7; i++) {
             if (i < d.functionalTests.length) {
                 form2body.push([
@@ -852,8 +860,23 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
                 form2body.push(['', { content: '', colSpan: 5 }]);
             }
         }
-        form2body.push([{ content: d.comments, colSpan: 6 }]);
-        form2body.push([{ content: d.preparedBy, colSpan: 3 }, { content: d.preparedByDate, colSpan: 3 }]);
+        form2body.push([{ 
+            content: d.comments, 
+            colSpan: 6, 
+            styles: { fontSize: 12, cellPadding: { top: 0.14, bottom: 0, left: 0.1}} 
+        }]);
+        form2body.push([
+            { 
+                content: '', 
+                colSpan: 4, 
+                styles: { cellPadding: { top: 0.285, bottom: 0, left: 0.2 } } 
+            }, 
+            { 
+                content: d.preparedByDate, 
+                colSpan: 2, 
+                styles: { fontSize: 15, cellPadding: { top: 0.285, bottom: 0, left: 0.2 } } 
+            }
+        ]);
         autoTable(doc, {
             body: form2body,
             theme: 'plain',
@@ -865,7 +888,7 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
                 fontSize: 9,
                 minCellHeight: 0.21,
                 cellPadding: {
-                    top: 0.1,
+                    top: 0.02,
                     right: 0.05,
                     bottom: 0.02,
                     left: 0.1,
@@ -878,6 +901,13 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
                 3: { cellWidth: 1.25 },
                 4: { cellWidth: 0.9 },
                 5: { cellWidth: 1.5 },
+            },
+            didDrawCell: (data: CellHookData) => {
+                if (data.section === 'body' && data.row.index === 35 && data.column.index === 0) {
+                    doc.setFont('Signature');
+                    doc.setFontSize(20);
+                    doc.text(d.preparedBy, data.cell.x + 0.4, data.cell.y + 0.47);
+                }
             },
         });
     }
