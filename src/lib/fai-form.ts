@@ -2,14 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { CellHookData, CellInput, RowInput, Styles } from 'jspdf-autotable';
 
-interface subAssembly {
-    partNumber: number;
-    partName: string;
-    partSerialNumber: number;
-    faiReportNumber: number;
-}
-
-interface Part {
+interface PartDetails {
     partNumber: string;
     partName: string;
     serialNumber: string;
@@ -17,10 +10,7 @@ interface Part {
 }
 
 interface FAIForm1Data {
-    partNumber: string;
-    partName: string;
-    serialNumber: string;
-    faiReportNumber: string;
+    partDetails: PartDetails;
     partRevisionLevel: string;
     drawingNumber: string;
     drawingRevisionLevel: string;
@@ -35,7 +25,7 @@ interface FAIForm1Data {
     assemblyFAI: boolean;
     partialFAI: boolean;
     reasonForPartialFAI: string;
-    subAssemblies: subAssembly[];
+    subAssemblies: PartDetails[];
     faiComplete: boolean;
     signature: string;
     signatureDate: string;
@@ -60,10 +50,7 @@ interface FunctionalTest {
 }
 
 interface FAIForm2Data {
-    partNumber: string;
-    partName: string;
-    serialNumber: string;
-    faiReportNumber: string;
+    partDetails: PartDetails;
     materialOrProcesses: MaterialOrProcess[];
     functionalTests: FunctionalTest[];
     comments: string;
@@ -71,9 +58,28 @@ interface FAIForm2Data {
     preparedByDate: string;
 }
 
+interface CharacteristicAndInspection {
+    charNo: string;
+    refernceLocation: string;
+    characteristicDesignator: string;
+    requirement: string;
+    result: string;
+    designedTooling: string;
+    nonConformanceNumber: string;
+    remarks: string;
+}
+
+interface FAIForm3Data {
+    partDetails: PartDetails;
+    characteristicsAndInspections: CharacteristicAndInspection[];
+    preparedBy: string;
+    preparedByDate: string;
+}
+
 interface FAIFormData {
     form1: FAIForm1Data;
     form2: FAIForm2Data;
+    form3: FAIForm3Data;
 }
 
 function randomNumber(min: number, max: number) {
@@ -155,7 +161,7 @@ function randomApproval() {
     }
 }
 
-export function generateRandomPart(): Part {
+export function generateRandomPart(): PartDetails {
     return {
         partNumber: randomNumber(100000, 999999).toString(),
         partName: randomCapitalLetterString(8),
@@ -164,23 +170,20 @@ export function generateRandomPart(): Part {
     };
 }
 
-export function generateRandomFAIForm1Data(p: Part): FAIForm1Data {
+export function generateRandomFAIForm1Data(p: PartDetails): FAIForm1Data {
     let detailFAI = randomBoolean();
     let fullFAI = randomBoolean();
-    let subAssemblies: subAssembly[] = [];
+    let subAssemblies: PartDetails[] = [];
     for (let i = 0; i < randomNumber(7, 15); i++) {
         subAssemblies.push({
-            partNumber: randomNumber(1000000, 9999999),
+            partNumber: randomNumber(1000000, 9999999).toString(),
             partName: randomCapitalLetterString(randomNumber(10, 20)),
-            partSerialNumber: randomNumber(1000000, 9999999),
-            faiReportNumber: randomNumber(1000000, 9999999),
+            serialNumber: randomNumber(1000000, 9999999).toString(),
+            faiReportNumber: randomNumber(1000000, 9999999).toString(),
         });
     }
     return {
-        partNumber: p.partNumber,
-        partName: p.partName,
-        serialNumber: p.serialNumber,
-        faiReportNumber: p.faiReportNumber,
+        partDetails: p,
         partRevisionLevel: randomCapitalLetter(),
         drawingNumber: randomNumber(100000, 999999).toString(),
         drawingRevisionLevel: randomCapitalLetter(),
@@ -206,7 +209,7 @@ export function generateRandomFAIForm1Data(p: Part): FAIForm1Data {
     };
 }
 
-export function generateRandomFAIForm2Data(p: Part): FAIForm2Data {
+export function generateRandomFAIForm2Data(p: PartDetails): FAIForm2Data {
 
     let materialOrProcesses: MaterialOrProcess[] = [];
     for (let i = 0; i < randomNumber(12, 24); i++) {
@@ -228,13 +231,32 @@ export function generateRandomFAIForm2Data(p: Part): FAIForm2Data {
     }
 
     return {
-        partNumber: p.partNumber,
-        partName: p.partName,
-        serialNumber: p.serialNumber,
-        faiReportNumber: p.faiReportNumber,
+        partDetails: p,
         materialOrProcesses,
         functionalTests,
         comments: randomSentence(70),
+        preparedBy: randomFullName(),
+        preparedByDate: randomDate(),
+    }
+}
+
+export function generateRandomFAIForm3Data(p: PartDetails): FAIForm3Data {
+    let characteristicsAndInspections: CharacteristicAndInspection[] = [];
+    for (let i = 0; i < randomNumber(12, 24); i++) {
+        characteristicsAndInspections.push({
+            charNo: randomNumber(100, 999).toString(),
+            refernceLocation: randomCapitalLetterString(6),
+            characteristicDesignator: randomCapitalLetterString(2),
+            requirement: randomCapitalLetterString(8),
+            result: randomCapitalLetterString(8),
+            designedTooling: randomName(),
+            nonConformanceNumber: randomNumber(100000, 999999).toString(),
+            remarks: randomSentence(50),
+        });
+    }
+    return {
+        partDetails: p,
+        characteristicsAndInspections,
         preparedBy: randomFullName(),
         preparedByDate: randomDate(),
     }
@@ -245,6 +267,7 @@ export function generateRandomFAIFormData(): FAIFormData {
     return {
         form1: generateRandomFAIForm1Data(p),
         form2: generateRandomFAIForm2Data(p),
+        form3: generateRandomFAIForm3Data(p),
     };
 }
 
@@ -291,9 +314,27 @@ function faiForm1PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
     if (!blank && d) {
         autoTable(doc, {
             body: [
-                [d.partNumber, d.partName, d.serialNumber, d.faiReportNumber],
-                [d.partRevisionLevel, d.drawingNumber, d.drawingRevisionLevel, d.additionalChanges],
-                [{content: d.manufacturingProcessReference, styles: { cellPadding: { top: 0.3, left: 0.2 }}}, d.organizationName, d.supplierCode, d.poNumber],
+                [
+                    d.partDetails.partNumber, 
+                    d.partDetails.partName, 
+                    d.partDetails.serialNumber, 
+                    d.partDetails.faiReportNumber
+                ],
+                [
+                    d.partRevisionLevel, 
+                    d.drawingNumber, 
+                    d.drawingRevisionLevel, 
+                    d.additionalChanges
+                ],
+                [
+                    {
+                        content: d.manufacturingProcessReference, 
+                        styles: { cellPadding: { top: 0.3, left: 0.2 }}
+                    }, 
+                    d.organizationName, 
+                    d.supplierCode, 
+                    d.poNumber
+                ],
             ],
             theme: 'plain',
             startY: 1,
@@ -531,10 +572,10 @@ function faiForm1PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
         for (let i = 0; i < 15; i++) {
             if (i < d.subAssemblies.length) {
                 subAssemblyBody.push([
-                    d.subAssemblies[i].partNumber.toString(),
+                    d.subAssemblies[i].partNumber,
                     d.subAssemblies[i].partName,
-                    d.subAssemblies[i].partSerialNumber.toString(),
-                    d.subAssemblies[i].faiReportNumber.toString(),
+                    d.subAssemblies[i].serialNumber,
+                    d.subAssemblies[i].faiReportNumber,
                 ]);
             } else {
                 subAssemblyBody.push(['', '', '', '']);
@@ -685,17 +726,7 @@ function faiForm1PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
     }
 }
 
-export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
 
-    const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "in",
-        format: [8.5, 11],
-    });
-    faiForm1PDF(doc, blank, d);
-
-    return doc.output('datauristring');
-}
 
 function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
     doc.setFont('helvetica', 'bold');
@@ -829,10 +860,10 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
 
     if (!blank && d) {
         let form2body: RowInput[] = [[
-            { content: d.partNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
-            { content: d.partName, colSpan: 2, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
-            { content: d.serialNumber, colSpan: 2, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
-            { content: d.faiReportNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}},
+            { content: d.partDetails.partNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
+            { content: d.partDetails.partName, colSpan: 2, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
+            { content: d.partDetails.serialNumber, colSpan: 2, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
+            { content: d.partDetails.faiReportNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}},
         ]];
         form2body.push([{ content: '', colSpan: 6, styles: { cellPadding: { top: 0.5, bottom: 0, left: 0.1 } } }]);
         for (let i = 0; i < 24; i++) {
@@ -863,7 +894,7 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
         form2body.push([{ 
             content: d.comments, 
             colSpan: 6, 
-            styles: { fontSize: 12, cellPadding: { top: 0.14, bottom: 0, left: 0.1}} 
+            styles: { fontSize: 12, cellPadding: { top: 0.14, bottom: 0, left: 0.2}} 
         }]);
         form2body.push([
             { 
@@ -913,6 +944,116 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
     }
 }
 
+function faiForm3PDF(doc: jsPDF, blank: boolean, d?: FAIForm3Data) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text("AS9102 First Article Inspection Form", 5.5, 0.5, { align: "center" });
+    doc.setFont('helvetica', 'bolditalic');
+    doc.setFontSize(12);
+    doc.text("Form 3: Characteristic Accountability, Verification, and Compatibility Evaluation", 0.7, 0.8, { align: "left" });
+
+    autoTable(doc, {
+        body: [
+            [
+                { content: '1. Part Number', colSpan: 4, styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}, 
+                { content: '2. Part Name', colSpan: 3, styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}, 
+                { content: '3. Serial Number', styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}, 
+                { content: '4. FAI Report Number', styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}
+            ],
+            [
+                { content: 'Characteristic Accountability', colSpan: 4, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.02, bottom: 0.02 }}},
+                { content: 'Inspection / Test Results', colSpan: 3, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.02, bottom: 0.02 }}},
+                { content: '', colSpan: 2, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.02, bottom: 0.02 }}},
+            ],
+            [
+                { content: '5. Char No.', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}}, 
+                { content: '6. Reference Location', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}}, 
+                { content: '7. Characteristic Designator', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}}, 
+                { content: '8. Requirement', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}}, 
+                { content: '9. Results', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}}, 
+                { content: '10. Designed Tooling', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}},
+                { content: '11. Non- Conformance Number', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}},
+                { content: '14. Remarks', colSpan: 2, styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}},
+            ],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            ['', '', '', '', '', '', '', { content: '', colSpan: 2 }],
+            [{ content: 'The signature indicates that all characteristics are accounted for; meet drawing requirements or are properly documented for disposition.', colSpan: 9, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.5, left: 0.05} } }],
+        ],
+        theme: 'grid',
+        startY: 1,
+        tableWidth: 10,
+        styles: {
+            fontStyle: 'bold',
+            textColor: [0, 0, 0],
+            fontSize: 8.5,
+            lineColor: [0, 0, 0],
+            lineWidth: 0.01,
+            minCellHeight: 0.21,
+            cellPadding: {
+                top: 0.02,
+                right: 0.02,
+                bottom: 0,
+                left: 0.02,
+            },
+        },
+        // Add up the column widths to get the table width: 
+        columnStyles: {
+            0: { cellWidth: 0.5 },
+            1: { cellWidth: 1 },
+            2: { cellWidth: 1 },
+            3: { cellWidth: 1.25 },
+            4: { cellWidth: 1.25 },
+            5: { cellWidth: 1 },
+            6: { cellWidth: 1 },
+            7: { cellWidth: 1.5 },
+            8: { cellWidth: 1.5 },
+        },
+        didDrawCell: (data: CellHookData) => {
+            if (data.section === 'body' && data.row.index === 26 && data.column.index === 0) {
+                doc.setFontSize(8.5);
+                doc.text('12. Prepared By', data.cell.x + 0.05, data.cell.y + 0.35);
+                doc.text('13. Date', data.cell.x + 6.05, data.cell.y + 0.35);
+                doc.setLineWidth(0.012);
+                doc.setDrawColor(0, 0, 0);
+                doc.rect(data.cell.x + 6, data.cell.y + 0.23, 4, 0.433, 'S');
+            }
+        }
+    });
+}
+
+export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
+
+    const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "in",
+        format: [8.5, 11],
+    });
+    faiForm1PDF(doc, blank, d);
+
+    return doc.output('datauristring');
+}
+
 export function createFAIForm2Pdf(blank: boolean, d?: FAIForm2Data) {
 
     const doc = new jsPDF({
@@ -934,6 +1075,8 @@ export function createFAIReport(blank: boolean, d?: FAIFormData) {
     faiForm1PDF(doc, blank, d?.form1);
     doc.addPage([8.5, 11], 'portrait');
     faiForm2PDF(doc, blank, d?.form2);
+    doc.addPage([11, 8.5], 'landscape');
+    faiForm3PDF(doc, blank, d?.form3);
 
     return doc.output('datauristring');
 }
