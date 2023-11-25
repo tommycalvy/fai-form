@@ -60,10 +60,10 @@ interface FAIForm2Data {
 
 interface CharacteristicAndInspection {
     charNo: string;
-    refernceLocation: string;
+    referenceLocation: string;
     characteristicDesignator: string;
     requirement: string;
-    result: string;
+    results: string;
     designedTooling: string;
     nonConformanceNumber: string;
     remarks: string;
@@ -245,13 +245,13 @@ export function generateRandomFAIForm3Data(p: PartDetails): FAIForm3Data {
     for (let i = 0; i < randomNumber(12, 24); i++) {
         characteristicsAndInspections.push({
             charNo: randomNumber(100, 999).toString(),
-            refernceLocation: randomCapitalLetterString(6),
+            referenceLocation: randomCapitalLetterString(6),
             characteristicDesignator: randomCapitalLetterString(2),
             requirement: randomCapitalLetterString(8),
-            result: randomCapitalLetterString(8),
+            results: randomCapitalLetterString(8),
             designedTooling: randomName(),
             nonConformanceNumber: randomNumber(100000, 999999).toString(),
-            remarks: randomSentence(50),
+            remarks: randomSentence(40),
         });
     }
     return {
@@ -593,7 +593,7 @@ function faiForm1PDF(doc: jsPDF, blank: boolean, d?: FAIForm1Data) {
                 fontStyle: 'normal',
                 minCellHeight: 0.2,
                 cellPadding: {
-                    top: 0.03,
+                    top: 0.035,
                     right: 0.05,
                     bottom: 0.01,
                     left: 0.1,
@@ -856,6 +856,13 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
             4: { cellWidth: 0.9 },
             5: { cellWidth: 1.5 },
         },
+        didDrawCell: (data: CellHookData) => {
+            if (data.section === 'body' && data.row.index === 1 && data.column.index === 4) {
+                doc.setFontSize(8.5);
+                doc.setFont('helvetica', 'normal');
+                doc.text('(Yes/No/NA)', data.cell.x + 0.09, data.cell.y + 0.53);
+            }
+        },
     });
 
     if (!blank && d) {
@@ -865,7 +872,7 @@ function faiForm2PDF(doc: jsPDF, blank: boolean, d?: FAIForm2Data) {
             { content: d.partDetails.serialNumber, colSpan: 2, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}}, 
             { content: d.partDetails.faiReportNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.05, left: 0.2 }}},
         ]];
-        form2body.push([{ content: '', colSpan: 6, styles: { cellPadding: { top: 0.5, bottom: 0, left: 0.1 } } }]);
+        form2body.push([{ content: '', colSpan: 6, styles: { cellPadding: { top: 0.495, bottom: 0, left: 0.1 } } }]);
         for (let i = 0; i < 24; i++) {
             if (i < d.materialOrProcesses.length) {
                 form2body.push([
@@ -955,15 +962,15 @@ function faiForm3PDF(doc: jsPDF, blank: boolean, d?: FAIForm3Data) {
     autoTable(doc, {
         body: [
             [
-                { content: '1. Part Number', colSpan: 4, styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}, 
-                { content: '2. Part Name', colSpan: 3, styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}, 
-                { content: '3. Serial Number', styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}, 
-                { content: '4. FAI Report Number', styles: { fontSize: 11, cellPadding: { top: 0.02, bottom: 0.35, left: 0.1 }}}
+                { content: '1. Part Number', colSpan: 4, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+                { content: '2. Part Name', colSpan: 3, styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+                { content: '3. Serial Number', styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}, 
+                { content: '4. FAI Report Number', styles: { fontSize: 9, cellPadding: { top: 0.02, bottom: 0.4, left: 0.1 }}}
             ],
             [
-                { content: 'Characteristic Accountability', colSpan: 4, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.02, bottom: 0.02 }}},
-                { content: 'Inspection / Test Results', colSpan: 3, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.02, bottom: 0.02 }}},
-                { content: '', colSpan: 2, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.02, bottom: 0.02 }}},
+                { content: 'Characteristic Accountability', colSpan: 4, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.04, bottom: 0.04 }}},
+                { content: 'Inspection / Test Results', colSpan: 3, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.04, bottom: 0.04 }}},
+                { content: '', colSpan: 2, styles: { fontSize: 11, halign: 'center', cellPadding: { top: 0.04, bottom: 0.04 }}},
             ],
             [
                 { content: '5. Char No.', styles: { cellPadding: { top: 0.02, bottom: 0.02, left: 0.05 }}}, 
@@ -1040,6 +1047,72 @@ function faiForm3PDF(doc: jsPDF, blank: boolean, d?: FAIForm3Data) {
             }
         }
     });
+    if (!blank && d) {
+        let form3body: RowInput[] = [[
+            { content: d.partDetails.partNumber, colSpan: 4, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.35, left: 0.2 }}}, 
+            { content: d.partDetails.partName, colSpan: 3, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.35, left: 0.2 }}}, 
+            { content: d.partDetails.serialNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.35, left: 0.2 }}}, 
+            { content: d.partDetails.faiReportNumber, styles: { fontSize: 15, cellPadding: { top: 0.25, bottom: 0.35, left: 0.2 }}}
+        ]];
+        form3body.push([{ content: '', colSpan: 9, styles: { cellPadding: { top: 0.3, bottom: 0 } } }]);
+        for (let i = 0; i < 23; i++) {
+            if (i < d.characteristicsAndInspections.length) {
+                form3body.push([
+                    d.characteristicsAndInspections[i].charNo, 
+                    d.characteristicsAndInspections[i].referenceLocation, 
+                    d.characteristicsAndInspections[i].characteristicDesignator, 
+                    d.characteristicsAndInspections[i].requirement, 
+                    d.characteristicsAndInspections[i].results, 
+                    d.characteristicsAndInspections[i].designedTooling, 
+                    d.characteristicsAndInspections[i].nonConformanceNumber, 
+                    { content: d.characteristicsAndInspections[i].remarks, colSpan: 2 },
+                ]);
+            } else {
+                form3body.push([{ content: '', colSpan: 9 }]);
+            }
+        }
+        form3body.push([
+            { content: '', colSpan: 6 },
+            { content: d.preparedByDate, colSpan: 3, styles: { fontSize: 15, halign: 'center', cellPadding: { top: 0.34, bottom: 0 }}},
+        ]);
+        autoTable(doc, {
+            body: form3body,
+            theme: 'plain',
+            startY: 1,
+            tableWidth: 10,
+            styles: {
+                fontStyle: 'normal',
+                textColor: [0, 0, 0],
+                fontSize: 8.5,
+                minCellHeight: 0.21,
+                cellPadding: {
+                    top: 0.035,
+                    right: 0.02,
+                    bottom: 0.01,
+                    left: 0.1,
+                },
+            },
+            // Add up the column widths to get the table width: 
+            columnStyles: {
+                0: { cellWidth: 0.5 },
+                1: { cellWidth: 1 },
+                2: { cellWidth: 1 },
+                3: { cellWidth: 1.25 },
+                4: { cellWidth: 1.25 },
+                5: { cellWidth: 1 },
+                6: { cellWidth: 1 },
+                7: { cellWidth: 1.5 },
+                8: { cellWidth: 1.5 },
+            },
+            didDrawCell: (data: CellHookData) => {
+                if (data.section === 'body' && data.row.index === 24 && data.column.index === 0) {
+                    doc.setFont('Signature');
+                    doc.setFontSize(20);
+                    doc.text(d.preparedBy, data.cell.x + 2, data.cell.y + 0.67);
+                }
+            }
+        });
+    }
 }
 
 export function createFAIForm1Pdf(blank: boolean, d?: FAIForm1Data) {
@@ -1078,5 +1151,5 @@ export function createFAIReport(blank: boolean, d?: FAIFormData) {
     doc.addPage([11, 8.5], 'landscape');
     faiForm3PDF(doc, blank, d?.form3);
 
-    return doc.output('datauristring');
+    return doc.output('datauristring', { filename: 'FAI_Report'});
 }
