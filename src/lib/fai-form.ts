@@ -1150,6 +1150,9 @@ export function createFAIReport(blank: boolean, d?: FAIFormData) {
     faiForm2PDF(doc, blank, d?.form2);
     doc.addPage([11, 8.5], 'landscape');
     faiForm3PDF(doc, blank, d?.form3);
-
-    return doc.output('datauristring', { filename: 'FAI_Report'});
+    doc.setProperties({
+        title: 'FAI Report',
+        subject: 'FAI Report',
+    });
+    return doc.output('datauristring', { filename: 'FAI Report'});
 }
